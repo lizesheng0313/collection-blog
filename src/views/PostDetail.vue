@@ -108,7 +108,6 @@ export default {
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { getPostContent, getRecommendedPosts } from '@/utils/mockData';
 import { Tag, Card } from 'ant-design-vue';
 import { 
   ClockCircleOutlined, 
@@ -127,6 +126,7 @@ import {
   CloudServerOutlined,
   ContainerOutlined
 } from '@ant-design/icons-vue';
+import { getArticleDetail, getArticleList } from '../api/article.js';
 
 const iconComponents = {
   'file-text': FileTextOutlined,
@@ -150,17 +150,79 @@ const post = ref(null);
 const recommendedPosts = ref([]);
 const loading = ref(true);
 
-onMounted(() => {
+onMounted(async () => {
   const postId = route.params.id;
   if (postId) {
-    post.value = getPostContent(postId);
-    recommendedPosts.value = getRecommendedPosts().filter(p => p.id != postId).slice(0, 3);
+    try {
+      loading.value = true;
+      
+      // 获取文章详情
+      const detailResponse = await getArticleDetail(Number(postId));
+      if (detailResponse.success && detailResponse.data) {
+        // 转换后端返回的数据为前端所需格式
+        const postData = detailResponse.data;
+        post.value = {
+          id: postData.id,
+          title: postData.title,
+          description: postData.summary || '',
+          cover: postData.thumbnail || '',
+          coverIcon: 'file-text', // 默认图标
+          coverColor: getCoverColor(postData.category_id || 0),
+          tags: postData.tags ? postData.tags.split(',') : [],
+          category: postData.source || '未分类',
+          isRecommended: postData.is_recommend === 1,
+          createTime: formatTime(postData.created_at),
+          readTime: `${Math.ceil((postData.content?.length || 0) / 500)} 分钟`,
+          views: postData.read_count || 0,
+          content: postData.content
+        };
+        
+        // 获取推荐文章列表
+        const listResponse = await getArticleList({ 
+          page: 1, 
+          pageSize: 4,
+          status: 'published',
+          is_recommend: 1 
+        });
+        
+        if (listResponse.success && listResponse.data) { 
+          recommendedPosts.value = listResponse.data.list
+            .filter(item => item.id != postId)
+            .slice(0, 3)
+            .map(item => ({
+              id: item.id,
+              title: item.title,
+              description: item.summary || '',
+              cover: item.thumbnail || '',
+              coverIcon: 'file-text',
+              coverColor: getCoverColor(item.category_id || 0),
+              category: item.source || '未分类',
+              createTime: formatTime(item.created_at),
+              tags: item.tags ? item.tags.split(',') : []
+            }));
+        }
+      }
+    } catch (error) {
+      console.error('获取文章详情失败', error);
+    } finally {
+      loading.value = false;
+    }
+  } else {
+    loading.value = false;
   }
-  loading.value = false;
 });
 
+// 根据分类ID获取封面颜色
+const getCoverColor = (categoryId) => {
+  const colors = [
+    '#8B5CF6', '#3B82F6', '#10B981', '#F97316', 
+    '#EC4899', '#0891B2', '#16A34A', '#9333EA'
+  ];
+  return colors[categoryId % colors.length];
+};
+
 const goToPost = (id) => {
-  if (route.params.id === id) {
+  if (route.params.id === id.toString()) {
     window.location.reload();
   } else {
     router.push({ name: 'PostDetail', params: { id } });
@@ -169,5 +231,47 @@ const goToPost = (id) => {
 
 const goBack = () => {
   router.push({ name: 'Home' });
+};
+
+// 格式化时间
+const formatTime = (timeStr) => {
+  if (!timeStr) return '未知时间';
+  
+  try {
+    // 解析ISO日期字符串
+    const date = new Date(timeStr);
+    const now = new Date();
+    
+    // 计算天数差
+    const oneDay = 24 * 60 * 60 * 1000; // 一天的毫秒数
+    
+    // 移除时间部分，只保留日期
+    const dateWithoutTime = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const nowWithoutTime = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    // 计算整天数的差异
+    const diffDays = Math.round((nowWithoutTime - dateWithoutTime) / oneDay);
+    
+    if (diffDays === 0) {
+      // 今天发布的
+      const diffHours = now.getHours() - date.getHours();
+      
+      if (diffHours === 0) {
+        const diffMinutes = now.getMinutes() - date.getMinutes();
+        return diffMinutes <= 0 ? '刚刚' : `${diffMinutes}分钟前`;
+      }
+      
+      return `${diffHours}小时前`;
+    } else if (diffDays < 30) {
+      // 一个月内
+      return `${diffDays}天前`;
+    } else {
+      // 超过一个月，显示具体日期
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    }
+  } catch (error) {
+    // 出错时返回原始时间字符串，去掉T和毫秒部分
+    return timeStr.replace('T', ' ').split('.')[0];
+  }
 };
 </script> 
