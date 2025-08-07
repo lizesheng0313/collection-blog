@@ -10,6 +10,16 @@ const routes = [
     path: '/post/:id',
     name: 'PostDetail',
     component: () => import('@/views/PostDetail.vue')
+  },
+  {
+    path: '/article/:id',
+    name: 'ArticleDetail',
+    component: () => import('@/views/PostDetail.vue')
+  },
+  {
+    path: '/github/:owner/:repo',
+    name: 'GitHubProjectDetail',
+    component: () => import('@/views/github/ProjectDetail.vue')
   }
 ]
 

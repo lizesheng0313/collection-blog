@@ -2,7 +2,7 @@ import axios from 'axios';
 import { message } from 'ant-design-vue';
 
 const service = axios.create({
-    baseURL: '',
+    baseURL: 'http://localhost:7001',
     timeout: 5000
 });
 
