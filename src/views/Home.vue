@@ -100,19 +100,19 @@
           </div>
 
           <div class="p-5">
-            <h3 class="text-lg font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">{{ post.github_full_name || post.title }}</h3>
-            <p class="text-gray-600 text-sm mb-4 line-clamp-3 leading-relaxed">{{ post.translated_description || post.original_description || post.content }}</p>
+            <h3 class="text-lg font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">{{ post.github_info?.full_name || post.github_full_name || post.title }}</h3>
+            <p class="text-gray-600 text-sm mb-4 line-clamp-3 leading-relaxed">{{ post.github_info?.translated_description || post.translated_description || post.github_info?.original_description || post.original_description || post.content }}</p>
 
             <!-- 统计信息 -->
             <div class="flex items-center justify-between mb-4 p-3 bg-gray-50 rounded-lg">
               <div class="flex items-center space-x-4 text-sm">
                 <span class="flex items-center text-yellow-600">
                   <StarOutlined class="mr-1" />
-                  <span class="font-medium">{{ formatNumber(post.stars_count || 0) }}</span>
+                  <span class="font-medium">{{ formatNumber(post.github_info?.stars || post.stars_count || 0) }}</span>
                 </span>
                 <span class="flex items-center text-blue-600">
                   <ForkOutlined class="mr-1" />
-                  <span class="font-medium">{{ formatNumber(post.forks_count || 0) }}</span>
+                  <span class="font-medium">{{ formatNumber(post.github_info?.forks || post.forks_count || 0) }}</span>
                 </span>
               </div>
               <button class="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105">
@@ -242,16 +242,18 @@ const goToDetail = (post) => {
     // GitHub项目跳转到专门的GitHub项目详情页
     let owner, repo;
 
-    // 从 github_full_name 字段解析 owner/repo
-    if (post.github_full_name) {
-      const parts = post.github_full_name.split('/');
+    // 优先从 github_info 获取
+    const fullName = post.github_info?.full_name || post.github_full_name;
+
+    if (fullName) {
+      const parts = fullName.split('/');
       if (parts.length === 2) {
         owner = parts[0];
         repo = parts[1];
       }
     }
 
-    // 如果没有 github_full_name，尝试其他字段
+    // 如果还没有，尝试其他字段
     if (!owner || !repo) {
       owner = post.owner || post.github_info?.owner;
       repo = post.name || post.repo || post.github_info?.name;
@@ -346,16 +348,19 @@ const getTagLabel = (post) => {
 
 // 获取项目的 topics 标签
 const getTopics = (post) => {
-  if (!post.topics) return [];
+  // 优先使用 github_info 中的 topics
+  let topics = post.github_info?.topics || post.topics;
+
+  if (!topics) return [];
 
   // 如果是字符串，按逗号分割
-  if (typeof post.topics === 'string') {
-    return post.topics.split(',').map(tag => tag.trim()).filter(tag => tag);
+  if (typeof topics === 'string') {
+    return topics.split(',').map(tag => tag.trim()).filter(tag => tag);
   }
 
   // 如果是数组，直接返回
-  if (Array.isArray(post.topics)) {
-    return post.topics;
+  if (Array.isArray(topics)) {
+    return topics;
   }
 
   return [];
