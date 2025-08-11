@@ -299,6 +299,8 @@ const fetchProjectDetail = async () => {
 
     if (response.success) {
       project.value = response.data
+      // 更新页面标题
+      updatePageTitle()
     }
   } catch (error) {
     console.error('获取项目详情失败:', error)
@@ -380,6 +382,29 @@ const handleImageError = (event) => {
 onMounted(() => {
   fetchProjectDetail()
 })
+
+// 监听项目数据变化，更新页面标题
+const updatePageTitle = () => {
+  if (project.value) {
+    const projectName = project.value.github_info?.full_name || project.value.github_full_name || '项目详情'
+    document.title = `${projectName} - 肥猫猫GitHub项目精选`
+
+    // 更新页面描述
+    const description = project.value.github_info?.translated_description ||
+                       project.value.translated_description ||
+                       project.value.github_info?.original_description ||
+                       project.value.original_description ||
+                       '优质开源项目详情介绍'
+
+    // 更新meta描述
+    let metaDescription = document.querySelector('meta[name="description"]')
+    if (metaDescription) {
+      metaDescription.setAttribute('content', description)
+    }
+  }
+}
+
+// updatePageTitle 函数已经在 fetchProjectDetail 中调用了
 </script>
 
 <style scoped>

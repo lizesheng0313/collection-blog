@@ -1,0 +1,21 @@
+{
+  "name": "GitHub项目精选",
+  "short_name": "项目精选",
+  "description": "发现优质开源项目，挖掘商业价值与技术机会",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "favicon.ico",
+      "sizes": "16x16 32x32",
+      "type": "image/x-icon"
+    }
+  ]
+}

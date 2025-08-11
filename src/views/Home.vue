@@ -11,8 +11,8 @@
               </svg>
             </div>
             <div>
-              <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">开源探索</h1>
-              <p class="text-gray-600 mt-2">发现优质开源项目，探索技术前沿</p>
+              <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">肥猫猫GitHub项目精选</h1>
+              <p class="text-gray-600 mt-2">发现优质开源项目，挖掘商业价值与技术机会</p>
             </div>
           </div>
         </div>
@@ -115,9 +115,6 @@
                   <span class="font-medium">{{ formatNumber(post.github_info?.forks || post.forks_count || 0) }}</span>
                 </span>
               </div>
-              <button class="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105">
-                探索项目
-              </button>
             </div>
 
             <!-- 技术标签 -->
@@ -368,6 +365,8 @@ const getTopics = (post) => {
 
 onMounted(() => {
   fetchData();
+  // 设置页面标题
+  document.title = 'GitHub项目精选 - 发现优质开源项目和商业机会';
 });
 
 

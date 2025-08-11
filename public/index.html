@@ -1,15 +1,67 @@
 <!DOCTYPE html>
-<html lang="">
+<html lang="zh-CN">
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
-    <link rel="icon" href="<%= BASE_URL %>favicon.ico">
-    <title><%= htmlWebpackPlugin.options.title %></title>
+
+    <!-- SEO 基础信息 -->
+    <title>肥猫猫GitHub项目精选 - 发现优质开源项目和商业机会</title>
+    <meta name="description" content="精选GitHub热门开源项目，提供详细的项目介绍和商业价值分析，帮助开发者发现优质项目和商业机会。">
+    <meta name="keywords" content="GitHub,开源项目,项目分析,商业价值,开发者工具,编程资源,技术趋势">
+    <meta name="author" content="GitHub项目精选">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://github-collection.com/">
+    <meta property="og:title" content="GitHub项目精选 - 发现优质开源项目和商业机会">
+    <meta property="og:description" content="精选GitHub热门开源项目，提供详细的项目介绍和商业价值分析，帮助开发者发现优质项目和商业机会。">
+    <meta property="og:image" content="<%= BASE_URL %>og-image.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://github-collection.com/">
+    <meta property="twitter:title" content="GitHub项目精选 - 发现优质开源项目和商业机会">
+    <meta property="twitter:description" content="精选GitHub热门开源项目，提供详细的项目介绍和商业价值分析，帮助开发者发现优质项目和商业机会。">
+    <meta property="twitter:image" content="<%= BASE_URL %>og-image.png">
+
+    <!-- 图标 -->
+    <link rel="icon" type="image/x-icon" href="<%= BASE_URL %>favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="<%= BASE_URL %>favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="<%= BASE_URL %>favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="<%= BASE_URL %>apple-touch-icon.png">
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="<%= BASE_URL %>manifest.json">
+
+    <!-- 主题色 -->
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="msapplication-TileColor" content="#3b82f6">
+
+    <!-- 搜索引擎优化 -->
+    <meta name="robots" content="index, follow">
+    <meta name="googlebot" content="index, follow">
+    <link rel="canonical" href="https://github-collection.com/">
+
+    <!-- 结构化数据 -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "GitHub项目精选",
+      "description": "精选GitHub热门开源项目，提供详细的项目介绍和商业价值分析",
+      "url": "https://github-collection.com/",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://github-collection.com/search?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
   </head>
   <body>
     <noscript>
-      <strong>We're sorry but <%= htmlWebpackPlugin.options.title %> doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
+      <strong>抱歉，GitHub项目精选需要启用JavaScript才能正常工作，请启用后继续访问。</strong>
     </noscript>
     <div id="app"></div>
     <!-- built files will be auto injected -->
