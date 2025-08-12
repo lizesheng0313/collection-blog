@@ -293,7 +293,7 @@ const formatNumber = (num) => {
   return num.toString();
 };
 
-// 格式化时间
+// 格式化时间 - 简单的年月日格式
 const formatTime = (time) => {
   if (!time) return '未知时间';
 
@@ -303,28 +303,11 @@ const formatTime = (time) => {
     return '时间格式错误';
   }
 
-  const now = new Date();
-  const diff = now - date;
-
-  // 如果时间差为负数或无效，显示原始时间
-  if (diff < 0 || isNaN(diff)) {
-    return date.toLocaleDateString('zh-CN');
-  }
-
-  const hours = Math.floor(diff / (1000 * 60 * 60));
-  if (hours < 1) {
-    const minutes = Math.floor(diff / (1000 * 60));
-    return minutes < 1 ? '刚刚' : `${minutes}分钟前`;
-  }
-  if (hours < 24) {
-    return `${hours}小时前`;
-  }
-  const days = Math.floor(hours / 24);
-  if (days < 30) {
-    return `${days}天前`;
-  }
-  // 超过30天显示具体日期
-  return date.toLocaleDateString('zh-CN');
+  return date.toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
 };
 
 // 获取标签颜色
