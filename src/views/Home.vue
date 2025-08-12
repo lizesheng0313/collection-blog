@@ -32,16 +32,16 @@
       <!-- 筛选条件 -->
       <div v-if="!loading" class="mb-8">
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div class="flex items-center justify-between">
+          <div class="flex items-center justify-between min-h-[48px]">
             <div class="flex items-center space-x-4">
-              <h2 class="text-lg font-semibold text-gray-800">热门趋势</h2>
+              <h2 class="text-lg font-semibold text-gray-800 leading-none !mb-0">热门趋势</h2>
               <a-radio-group v-model:value="filters.trending_period" @change="fetchData" size="large" class="bg-gray-50 rounded-lg p-1">
                 <a-radio-button value="daily" class="px-6 py-2">今日热门</a-radio-button>
                 <a-radio-button value="weekly" class="px-6 py-2">本周精选</a-radio-button>
                 <a-radio-button value="monthly" class="px-6 py-2">月度推荐</a-radio-button>
               </a-radio-group>
             </div>
-            <div class="text-sm text-gray-500">
+            <div class="text-sm text-gray-500 leading-none">
               共找到 {{ posts.length }} 个优质项目
             </div>
           </div>
