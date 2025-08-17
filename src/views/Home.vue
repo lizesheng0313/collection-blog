@@ -29,20 +29,58 @@
         </div>
       </div>
 
+      <!-- 搜索框 -->
+      <div v-if="!loading" class="mb-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div class="max-w-2xl mx-auto">
+            <a-input-search
+              v-model:value="searchKeyword"
+              placeholder="搜索项目名称、描述或标签..."
+              size="large"
+              @search="handleSearch"
+              class="w-full"
+            >
+              <template #enterButton>
+                <a-button type="primary" size="large">搜索</a-button>
+              </template>
+            </a-input-search>
+            <div v-if="searchKeyword" class="mt-3 text-center">
+              <a-button @click="clearSearch" size="small" type="link">
+                清除搜索条件
+              </a-button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- 筛选条件 -->
       <div v-if="!loading" class="mb-8">
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div class="flex items-center justify-between min-h-[48px]">
             <div class="flex items-center space-x-4">
-              <h2 class="text-lg font-semibold text-gray-800 leading-none !mb-0">热门趋势</h2>
-              <a-radio-group v-model:value="filters.trending_period" @change="fetchData" size="large" class="bg-gray-50 rounded-lg p-1">
+              <h2 class="text-lg font-semibold text-gray-800 leading-none !mb-0">
+                {{ isSearchMode ? '搜索结果' : '热门趋势' }}
+              </h2>
+              <a-radio-group
+                v-if="!isSearchMode"
+                v-model:value="filters.trending_period"
+                @update:value="handleFilterChange"
+                size="large"
+                class="bg-gray-50 rounded-lg p-1"
+              >
                 <a-radio-button value="daily" class="px-6 py-2">今日热门</a-radio-button>
                 <a-radio-button value="weekly" class="px-6 py-2">本周精选</a-radio-button>
                 <a-radio-button value="monthly" class="px-6 py-2">月度推荐</a-radio-button>
               </a-radio-group>
+              <div v-if="isSearchMode" class="text-sm text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+                搜索: "{{ searchKeyword }}"
+              </div>
             </div>
             <div class="text-sm text-gray-500 leading-none">
-              共找到 {{ posts.length }} 个优质项目
+              共找到 {{ pagination.total || posts.length }} 个优质项目
+              <span v-if="posts.length < pagination.total" class="text-blue-600">
+                (已显示 {{ posts.length }} 个)
+              </span>
             </div>
           </div>
         </div>
@@ -60,6 +98,8 @@
           <p class="text-gray-600">当前时间段内没有找到相关项目，请尝试切换其他时间段</p>
         </div>
       </div>
+
+
 
       <!-- 主体内容 -->
       <div v-if="!loading && posts.length > 0">
@@ -140,6 +180,59 @@
         </div>
           </div>
         </div>
+
+        <!-- 加载更多状态 -->
+        <div class="mt-12 text-center">
+          <!-- 加载中状态 -->
+          <div v-if="loadingMore" class="flex justify-center items-center py-8">
+            <div class="flex items-center space-x-3">
+              <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+              <div class="text-gray-600">正在加载更多项目...</div>
+            </div>
+          </div>
+
+          <!-- 没有更多数据 -->
+          <div v-else-if="!pagination.hasMore && posts.length > 0" class="py-8">
+            <div class="text-gray-500 text-sm">
+              <div class="flex items-center justify-center space-x-2">
+                <div class="w-16 h-px bg-gray-300"></div>
+                <span>已显示全部 {{ posts.length }} 个项目</span>
+                <div class="w-16 h-px bg-gray-300"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 手动加载更多按钮 -->
+          <div v-if="pagination.hasMore && !loadingMore && posts.length > 0" class="py-8 text-center">
+            <button
+              @click="fetchData(true)"
+              class="px-8 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md font-medium"
+            >
+              加载更多项目 ({{ pagination.total - posts.length }} 项待加载)
+            </button>
+            <div class="mt-2 text-sm text-gray-500">
+              或继续滚动自动加载
+            </div>
+          </div>
+
+          <!-- 分页信息 -->
+          <div v-if="posts.length > 0" class="py-6 border-t border-gray-200 mt-8">
+            <div class="flex items-center justify-between text-sm text-gray-600">
+              <div>
+                显示第 1 - {{ posts.length }} 项，共 {{ pagination.total }} 项结果
+                <span v-if="isSearchMode" class="ml-2 text-blue-600">
+                  (搜索: "{{ searchKeyword }}")
+                </span>
+              </div>
+              <div v-if="pagination.hasMore" class="text-blue-600">
+                继续滚动加载更多...
+              </div>
+              <div v-else-if="posts.length > 0" class="text-gray-500">
+                已显示全部结果
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -152,7 +245,7 @@ export default {
 </script>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { Tag } from 'ant-design-vue';
 import {
@@ -173,6 +266,7 @@ import {
   ForkOutlined
 } from '@ant-design/icons-vue';
 import { getGitHubProjects } from '../api/github.js';
+import axios from 'axios';
 
 const iconComponents = {
   'file-text': FileTextOutlined,
@@ -193,41 +287,135 @@ const iconComponents = {
 const router = useRouter();
 const posts = ref([]);
 const loading = ref(false);
+const loadingMore = ref(false);
 const filters = ref({ trending_period: 'daily' });
+const searchKeyword = ref('');
+const isSearchMode = ref(false); // 是否处于搜索模式
+
+// 分页状态管理
+const pagination = ref({
+  currentPage: 1,
+  pageSize: 20,
+  hasMore: true,
+  total: 0
+});
+
+// 处理筛选条件变化
+const handleFilterChange = (value) => {
+  console.log('handleFilterChange called:', value);
+  filters.value.trending_period = value;
+  fetchData();
+};
 
 // 获取GitHub项目数据
-const fetchData = async () => {
+const fetchData = async (isLoadMore = false) => {
   try {
-    const prev = posts.value;
-    loading.value = true;
-
-    // 获取GitHub项目（带周期筛选）
-    const params = { page: 1, pageSize: 20 };
-    if (filters.value.trending_period) params.trending_period = filters.value.trending_period;
-    const response = await getGitHubProjects(params);
-
-    if (response.success && response.data) {
-      const articles = response.data.list || [];
-      if (articles.length > 0) {
-        posts.value = articles.map(article => ({
-          ...article,
-          createTime: article.collect_time || article.created_at,
-          views: article.read_count || 0,
-          category: 'GitHub项目',
-          tags: article.topics ? (typeof article.topics === 'string' ? article.topics.split(',') : article.topics) : [],
-          isRecommended: false,
-          article_type: 'github_project'
-        }));
-      } else {
-        posts.value = [];
-      }
+    // 防止重复加载
+    if (isLoadMore && (loadingMore.value || !pagination.value.hasMore)) {
+      return;
     }
 
-    console.log('API响应数据:', response);
+    // 防止重复的首次加载
+    if (!isLoadMore && loading.value) {
+      return;
+    }
+
+    if (isLoadMore) {
+      loadingMore.value = true;
+    } else {
+      loading.value = true;
+      // 重置分页状态
+      pagination.value.currentPage = 1;
+      pagination.value.hasMore = true;
+      posts.value = [];
+    }
+
+    let response;
+
+    // 如果处于搜索模式，使用统一搜索接口
+    if (isSearchMode.value && searchKeyword.value.trim()) {
+      const searchParams = {
+        keyword: searchKeyword.value.trim(),
+        page: pagination.value.currentPage,
+        pageSize: pagination.value.pageSize,
+        article_type: 'github_project'
+      };
+      // 使用统一的搜索API
+      response = await axios.get('/api/articles/search', { params: searchParams });
+    } else {
+      // 没有搜索时使用普通项目列表接口
+      const params = {
+        page: pagination.value.currentPage,
+        pageSize: pagination.value.pageSize
+      };
+      if (filters.value.trending_period) params.trending_period = filters.value.trending_period;
+      response = await getGitHubProjects(params);
+    }
+
+    // 统一处理响应数据结构
+    // 搜索API使用axios直接调用，普通列表API使用request函数（被拦截器处理）
+    const responseData = isSearchMode.value ? response.data : response;
+
+    if (responseData?.success && responseData?.data) {
+      let articles, total;
+
+      // 统一使用list字段处理数据格式
+      articles = responseData.data.list || [];
+      total = responseData.data.total || articles.length;
+
+      const formattedArticles = articles.map(article => ({
+        ...article,
+        createTime: article.collect_time || article.created_at,
+        views: article.read_count || 0,
+        category: 'GitHub项目',
+        tags: article.topics ? (typeof article.topics === 'string' ? article.topics.split(',') : article.topics) : [],
+        isRecommended: false,
+        article_type: 'github_project',
+        // 确保搜索结果的必要字段
+        id: article.id || article.github_id,
+        title: article.title || article.name || article.full_name,
+        description: article.translated_description || article.description || article.summary || '',
+        url: article.github_url || article.url || article.html_url,
+        stars: article.stars_count || article.stars || article.stargazers_count || 0,
+        forks: article.forks_count || article.forks || 0,
+        language: article.programming_language || article.language || article.primary_language,
+        updated_at: article.updated_at || article.pushed_at,
+        owner: article.owner || (article.github_full_name ? article.github_full_name.split('/')[0] : ''),
+        repo: article.repo || article.name || (article.github_full_name ? article.github_full_name.split('/')[1] : ''),
+        avatar_url: article.avatar_url || (article.owner && article.owner.avatar_url),
+        // 添加搜索结果特有的字段
+        github_full_name: article.github_full_name,
+        overall_score: article.overall_score
+      }));
+
+      if (isLoadMore) {
+        // 加载更多：追加到现有列表
+        posts.value.push(...formattedArticles);
+      } else {
+        // 首次加载：替换列表
+        posts.value = formattedArticles;
+      }
+
+      // 更新分页状态
+      pagination.value.total = total;
+      pagination.value.hasMore = articles.length === pagination.value.pageSize && posts.value.length < total;
+
+      if (isLoadMore) {
+        pagination.value.currentPage++;
+      } else {
+        pagination.value.currentPage = 2; // 下次加载第2页
+      }
+
+
+    }
   } catch (error) {
     console.error('获取数据失败', error);
   } finally {
-    loading.value = false;
+    if (isLoadMore) {
+      loadingMore.value = false;
+    } else {
+      loading.value = false;
+    }
   }
 };
 
@@ -346,10 +534,121 @@ const getTopics = (post) => {
   return [];
 };
 
+// 滚动监听逻辑
+const handleScroll = () => {
+  // 防抖处理
+  if (loadingMore.value || !pagination.value.hasMore || loading.value) {
+    return;
+  }
+
+  // 确保有数据才允许加载更多
+  if (posts.value.length === 0) {
+    return;
+  }
+
+  const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+  const windowHeight = window.innerHeight;
+  const documentHeight = document.documentElement.scrollHeight;
+
+  // 当滚动到距离底部200px时开始加载
+  if (scrollTop + windowHeight >= documentHeight - 200) {
+    fetchData(true);
+  }
+};
+
+// 鼠标滚轮监听逻辑
+const handleWheel = (event) => {
+  // 防抖处理
+  if (loadingMore.value || !pagination.value.hasMore || loading.value) {
+    return;
+  }
+
+  // 确保有数据才允许加载更多
+  if (posts.value.length === 0) {
+    return;
+  }
+
+  // 只在向下滚动时触发
+  if (event.deltaY > 0) {
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    const windowHeight = window.innerHeight;
+    const documentHeight = document.documentElement.scrollHeight;
+
+    // 当滚动到距离底部300px时开始加载
+    if (scrollTop + windowHeight >= documentHeight - 300) {
+      fetchData(true);
+    }
+  }
+};
+
+// 搜索处理
+const handleSearch = () => {
+  // 防止重复调用
+  if (loading.value) {
+    return;
+  }
+
+  if (!searchKeyword.value.trim()) {
+    clearSearch();
+    return;
+  }
+
+  isSearchMode.value = true; // 进入搜索模式
+  pagination.value.currentPage = 1;
+  pagination.value.hasMore = true;
+  posts.value = [];
+  fetchData();
+};
+
+// 清除搜索
+const clearSearch = () => {
+  searchKeyword.value = '';
+  isSearchMode.value = false; // 退出搜索模式
+  pagination.value.currentPage = 1;
+  pagination.value.hasMore = true;
+  posts.value = [];
+  fetchData();
+};
+
+// 节流函数
+const throttle = (func, delay) => {
+  let timeoutId;
+  let lastExecTime = 0;
+  return function (...args) {
+    const currentTime = Date.now();
+
+    if (currentTime - lastExecTime > delay) {
+      func.apply(this, args);
+      lastExecTime = currentTime;
+    } else {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        func.apply(this, args);
+        lastExecTime = Date.now();
+      }, delay - (currentTime - lastExecTime));
+    }
+  };
+};
+
+const throttledHandleScroll = throttle(handleScroll, 200);
+const throttledHandleWheel = throttle(handleWheel, 200);
+
 onMounted(() => {
   fetchData();
   // 设置页面标题
   document.title = 'GitHub项目精选 - 发现优质开源项目和商业机会';
+
+  // 添加滚动监听
+  window.addEventListener('scroll', throttledHandleScroll);
+  // 添加鼠标滚轮监听
+  window.addEventListener('wheel', throttledHandleWheel, { passive: true });
+});
+
+onUnmounted(() => {
+  // 移除滚动监听
+  window.removeEventListener('scroll', throttledHandleScroll);
+  // 移除鼠标滚轮监听
+  window.removeEventListener('wheel', throttledHandleWheel);
 });
 
 

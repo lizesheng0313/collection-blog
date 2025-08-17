@@ -51,3 +51,14 @@ export const getTrendingProjects = (params) => {
     params
   })
 }
+
+/**
+ * 搜索GitHub项目
+ */
+export const searchGitHubProjects = (params) => {
+  return request({
+    url: '/api/github/search',
+    method: 'get',
+    params
+  })
+}

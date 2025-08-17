@@ -150,6 +150,16 @@
 
         </div>
       </div>
+
+      <!-- 评论区域 -->
+      <div class="mb-8" id="comments">
+        <h3 class="text-lg font-semibold mb-4">💬 评论讨论</h3>
+        <CommentSection
+          :article-id="project?.id"
+          article-type="github_project"
+          v-if="project?.id"
+        />
+      </div>
       </div>
 
       <!-- 右侧文档目录 -->
@@ -181,6 +191,13 @@
                   </a>
                 </div>
               </div>
+
+              <!-- 评论区 -->
+              <div>
+                <a href="#comments" class="block text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors py-1">
+                  💬 评论讨论
+                </a>
+              </div>
             </nav>
           </div>
         </div>
@@ -198,6 +215,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { getGitHubProjectDetail } from '@/api/github'
+import CommentSection from '@/components/CommentSection.vue'
 
 const route = useRoute()
 const loading = ref(false)
